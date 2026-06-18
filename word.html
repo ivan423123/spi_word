@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SPI難語帖</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Yuji+Syuku&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#eae7dd;
+    --paper-deep:#dfdbcc;
+    --card:#fbfaf5;
+    --ink:#262320;
+    --ink-soft:#6e6858;
+    --ink-faint:#9a9384;
+    --line:#cdc6b2;
+    --line-soft:#ddd8c9;
+    --indigo:#22405f;
+    --indigo-deep:#152a40;
+    --indigo-soft:#4d6c89;
+    --indigo-bg:#e7ecf0;
+    --shu:#ad3d27;
+    --shu-deep:#86301e;
+    --shu-bg:#f6e6e0;
+    --brass:#9c7d3f;
+    --brass-bg:#f1e9d6;
+    --purple:#6c5a82;
+    --purple-bg:#ece6f1;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      repeating-linear-gradient(transparent 0, transparent 27px, rgba(160,150,120,0.10) 28px),
+      linear-gradient(180deg, var(--paper) 0%, var(--paper-deep) 100%);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:620px;margin:0 auto;padding:0 0 10px;}
+
+  /* ---------- header ---------- */
+  .header{padding:30px 22px 0;text-align:center;}
+  .eyebrow{
+    font-family:'Yuji Syuku', serif;
+    color:var(--shu);
+    font-size:13px;
+    letter-spacing:.12em;
+    display:inline-block;
+    border-bottom:1px solid var(--shu);
+    padding-bottom:3px;
+  }
+  .header h1{
+    font-family:'Shippori Mincho', serif;
+    font-weight:800;
+    font-size:30px;
+    margin:10px 0 4px;
+    letter-spacing:.02em;
+  }
+  .header .sub{font-size:12px;color:var(--ink-soft);margin-bottom:18px;}
+
+  .stats{
+    display:flex;justify-content:center;margin:0 18px;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    background:rgba(255,253,247,0.5);
+  }
+  .stat{flex:1;max-width:160px;text-align:center;padding:11px 4px;border-right:1px solid var(--line);}
+  .stat:last-child{border-right:none;}
+  .stat .num{font-family:'JetBrains Mono',monospace;font-size:21px;font-weight:700;color:var(--indigo);}
+  .stat .label{font-size:10px;color:var(--ink-soft);letter-spacing:.04em;margin-top:2px;}
+  .progress-rail{height:5px;background:var(--paper-deep);margin:0 18px;border-radius:0 0 4px 4px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--indigo-soft),var(--indigo));transition:width .5s ease;}
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex;gap:5px;padding:18px 18px 0;justify-content:center;}
+  .tab{
+    font-size:13px;font-weight:700;padding:10px 16px 9px;
+    border-radius:9px 9px 0 0;background:var(--paper-deep);color:var(--ink-soft);
+    cursor:pointer;border:1px solid var(--line);border-bottom:none;
+    position:relative;top:1px;transition:background .15s,color .15s;
+    user-select:none;
+  }
+  .tab.active{background:var(--card);color:var(--ink);box-shadow:0 -3px 0 var(--indigo) inset;}
+  .tab:hover:not(.active){color:var(--ink);}
+
+  .panel{
+    background:var(--card);border:1px solid var(--line);border-radius:0 10px 10px 10px;
+    margin:0 18px 26px;padding:24px 18px 28px;
+    box-shadow:0 3px 16px rgba(40,30,10,.07);
+    min-height:340px;
+  }
+
+  /* ---------- flashcard ---------- */
+  .card-stage{display:flex;flex-direction:column;align-items:center;}
+  .session-progress{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-faint);margin-bottom:14px;letter-spacing:.02em;}
+
+  .flashcard{width:100%;max-width:360px;height:230px;position:relative;perspective:1300px;margin:0 auto;}
+  .flashcard-inner{width:100%;height:100%;position:relative;transition:transform .5s cubic-bezier(.4,.15,.2,1);transform-style:preserve-3d;cursor:pointer;}
+  .flashcard.flipped .flashcard-inner{transform:rotateY(180deg);}
+  .face{
+    position:absolute;inset:0;backface-visibility:hidden;border-radius:10px;
+    border:1px solid var(--line);background:#fffdf7;
+    box-shadow:0 4px 18px rgba(40,30,10,.10);
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  .face.back{transform:rotateY(180deg);}
+  .tab-strip{
+    position:absolute;top:0;left:20px;padding:5px 13px 5px;border-radius:0 0 7px 7px;
+    font-family:'Yuji Syuku', serif;font-size:12px;color:#fff;letter-spacing:.06em;z-index:2;
+  }
+  .tab-strip.word{background:var(--indigo);}
+  .tab-strip.phrase{background:var(--brass);}
+  .tab-strip.relation{background:var(--purple);}
+  .hole{position:absolute;top:13px;right:15px;width:11px;height:11px;border-radius:50%;background:var(--paper);box-shadow:inset 0 1px 3px rgba(0,0,0,.3);}
+
+  .face .content{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:38px 22px 6px;}
+  .face.front .term{font-family:'Shippori Mincho', serif;font-weight:700;font-size:29px;line-height:1.45;color:var(--ink);}
+  .face.back .term-small{font-family:'Shippori Mincho', serif;font-size:13px;color:var(--ink-faint);position:absolute;top:36px;left:21px;}
+  .face.back .meaning{font-family:'Zen Kaku Gothic New', sans-serif;font-size:16px;line-height:1.75;color:var(--ink);padding-top:10px;}
+  .hint{text-align:center;font-size:10.5px;color:var(--ink-faint);padding-bottom:11px;letter-spacing:.02em;}
+
+  .stamp{
+    position:absolute;width:96px;height:96px;border:5px solid var(--shu);border-radius:50%;
+    color:var(--shu);font-family:'Yuji Syuku', serif;font-size:34px;display:flex;align-items:center;justify-content:center;
+    opacity:0;transform:rotate(-16deg) scale(2.4);top:50%;left:50%;margin:-48px 0 0 -48px;
+    pointer-events:none;mix-blend-mode:multiply;z-index:3;
+  }
+  .stamp.show{animation:stampDown .6s cubic-bezier(.22,1.6,.4,1) forwards;}
+  @keyframes stampDown{
+    0%{opacity:0;transform:rotate(-16deg) scale(2.6);}
+    55%{opacity:.92;transform:rotate(-11deg) scale(.9);}
+    100%{opacity:.85;transform:rotate(-11deg) scale(1);}
+  }
+
+  .dots{display:flex;gap:4px;justify-content:center;margin-top:14px;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .dot.filled{background:var(--indigo);}
+  .dot.mastered-dot{background:var(--shu);}
+
+  .actions{display:flex;gap:11px;width:100%;max-width:360px;margin:18px auto 0;opacity:0;transform:translateY(6px);transition:opacity .25s, transform .25s;pointer-events:none;}
+  .actions.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+  .btn{flex:1;font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:14.5px;padding:13px 8px;border-radius:9px;border:none;cursor:pointer;transition:transform .12s;}
+  .btn:active{transform:scale(.96);}
+  .btn.again{background:#fff;color:var(--shu);border:1.5px solid var(--shu);}
+  .btn.again:hover{background:var(--shu-bg);}
+  .btn.know{background:var(--indigo);color:#fff;}
+  .btn.know:hover{background:var(--indigo-deep);}
+  .flip-tip{font-size:11.5px;color:var(--ink-faint);text-align:center;margin-top:13px;}
+
+  /* ---------- quiz ---------- */
+  .quiz-head{text-align:center;margin-bottom:4px;}
+  .quiz-prompt{font-size:11.5px;color:var(--ink-soft);letter-spacing:.03em;}
+  .quiz-term{font-family:'Shippori Mincho', serif;font-weight:700;font-size:28px;padding:10px 0 22px;text-align:center;}
+  .choices{display:flex;flex-direction:column;gap:10px;max-width:480px;margin:0 auto;}
+  .choice{
+    font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;text-align:left;
+    padding:13px 16px;border-radius:9px;border:1.5px solid var(--line);background:#fff;
+    cursor:pointer;color:var(--ink);line-height:1.55;transition:border-color .15s, background .15s;
+  }
+  .choice:hover:not(.disabled){border-color:var(--indigo-soft);}
+  .choice.correct{border-color:var(--indigo);background:var(--indigo-bg);}
+  .choice.wrong{border-color:var(--shu);background:var(--shu-bg);animation:shake .35s;}
+  .choice.disabled{cursor:default;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+  .quiz-footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;max-width:480px;margin-left:auto;margin-right:auto;}
+  .quiz-score{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  .btn-next{background:var(--indigo);color:#fff;font-weight:700;font-size:13.5px;padding:10px 20px;border-radius:9px;border:none;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .2s;}
+  .btn-next.show{opacity:1;pointer-events:auto;}
+
+  /* ---------- list ---------- */
+  .list-controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+  .search{flex:1 1 100%;font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;padding:10px 13px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);}
+  .search:focus{outline:2px solid var(--indigo-soft);outline-offset:-1px;}
+  .chip-row{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{font-size:11.5px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer;color:var(--ink-soft);user-select:none;}
+  .chip.active{background:var(--indigo);color:#fff;border-color:var(--indigo);}
+  .list-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-faint);margin:2px 2px 10px;}
+  .list-rows{display:flex;flex-direction:column;}
+  .row{display:flex;flex-direction:column;gap:3px;padding:12px 4px;border-bottom:1px solid var(--line-soft);}
+  .row-top{display:flex;align-items:baseline;gap:8px;}
+  .row .mark{width:15px;flex-shrink:0;text-align:center;font-size:12px;color:var(--shu);}
+  .row .term{font-family:'Shippori Mincho', serif;font-weight:700;font-size:15.5px;color:var(--ink);line-height:1.4;}
+  .row .badge{font-size:9.5px;padding:2px 7px;border-radius:999px;flex-shrink:0;margin-left:auto;white-space:nowrap;}
+  .row .meaning{font-size:12.5px;color:var(--ink-soft);line-height:1.6;padding-left:23px;}
+  .badge.word{background:var(--indigo-bg);color:var(--indigo);}
+  .badge.phrase{background:var(--brass-bg);color:var(--brass);}
+  .badge.relation{background:var(--purple-bg);color:var(--purple);}
+  .empty-msg{text-align:center;color:var(--ink-faint);font-size:13px;padding:30px 0;}
+
+  .footer-bar{text-align:center;padding:4px 0 32px;font-size:11.5px;color:var(--ink-faint);}
+  .footer-bar a{color:var(--ink-soft);text-decoration:underline;cursor:pointer;}
+
+  .loading{text-align:center;padding:60px 0;color:var(--ink-soft);font-size:13px;}
+
+  @media (max-width:420px){
+    .header h1{font-size:25px;}
+    .flashcard{height:215px;}
+    .face.front .term{font-size:24px;}
+    .row .term{font-size:14.5px;}
+  }
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">読み込み中…</div></div>
+
+<script>
+const VOCAB = [{"term": "粗略", "meaning": "ものごとの扱い方がぞんざいなこと", "category": "word", "id": "v1"}, {"term": "逓減", "meaning": "次第に減ること", "category": "word", "id": "v2"}, {"term": "路頭に迷う", "meaning": "生活に困ること", "category": "word", "id": "v3"}, {"term": "進取", "meaning": "進んで新しいことをすること", "category": "word", "id": "v4"}, {"term": "よんどころない", "meaning": "そうするよりほかにないこと", "category": "word", "id": "v5"}, {"term": "潜行", "meaning": "ひそかに活動すること", "category": "word", "id": "v6"}, {"term": "一顧", "meaning": "ちょっと振り返ってみること", "category": "word", "id": "v7"}, {"term": "扇動", "meaning": "人をあおりたて、行動を起こすように刺激すること", "category": "word", "id": "v8"}, {"term": "亜流", "meaning": "一流の真似をして劣っているもの", "category": "word", "id": "v9"}, {"term": "超然", "meaning": "世俗的な物事にこだわらないこと", "category": "word", "id": "v10"}, {"term": "在野", "meaning": "公職につかず、民間にいること", "category": "word", "id": "v11"}, {"term": "桎梏", "meaning": "手かせ足かせ。自由を厳しく束縛するもの", "category": "word", "id": "v12"}, {"term": "心酔", "meaning": "心から慕って関心を持つこと", "category": "word", "id": "v13"}, {"term": "卓見", "meaning": "優れた意見", "category": "word", "id": "v14"}, {"term": "謬見", "meaning": "間違った考え", "category": "word", "id": "v15"}, {"term": "大綱", "meaning": "話の根本", "category": "word", "id": "v16"}, {"term": "判然", "meaning": "はっきりしていること", "category": "word", "id": "v17"}, {"term": "確執", "meaning": "互いに反目し、仲が悪いこと", "category": "word", "id": "v18"}, {"term": "精通", "meaning": "知悉していること(詳しく知っていること)", "category": "word", "id": "v19"}, {"term": "常緑樹", "meaning": "落葉しない木", "category": "word", "id": "v20"}, {"term": "くさす", "meaning": "悪く言うこと", "category": "word", "id": "v21"}, {"term": "浮沈", "meaning": "栄えるか衰えるか", "category": "word", "id": "v22"}, {"term": "拘泥", "meaning": "気にしてこだわること", "category": "word", "id": "v23"}, {"term": "悔悟", "meaning": "過ちを認めて後悔すること", "category": "word", "id": "v24"}, {"term": "耽溺", "meaning": "夢中になっておぼれること", "category": "word", "id": "v25"}, {"term": "悠然", "meaning": "ゆったりと落ち着いていること", "category": "word", "id": "v26"}, {"term": "増長", "meaning": "だんだんつけ上がって、人を見下すこと", "category": "word", "id": "v27"}, {"term": "不遜", "meaning": "謙虚でないこと", "category": "word", "id": "v28"}, {"term": "漫然", "meaning": "ぼんやりしていること", "category": "word", "id": "v29"}, {"term": "おどろおどろしい", "meaning": "不気味で恐ろしいこと", "category": "word", "id": "v30"}, {"term": "わななく", "meaning": "恐怖や寒さで体が震えること", "category": "word", "id": "v31"}, {"term": "じょさいない", "meaning": "気が利いていて抜かりないこと", "category": "word", "id": "v32"}, {"term": "悉く(ことごとく)", "meaning": "問題にしていることすべて", "category": "word", "id": "v33"}, {"term": "不断", "meaning": "決断力に乏しいこと", "category": "word", "id": "v34"}, {"term": "泰然", "meaning": "ゆったりして物事に動じないこと", "category": "word", "id": "v35"}, {"term": "大度", "meaning": "度量が大きいこと", "category": "word", "id": "v36"}, {"term": "すいたらしい", "meaning": "なんとなく好ましく、感じが良いこと", "category": "word", "id": "v37"}, {"term": "腑抜け", "meaning": "気力がないこと", "category": "word", "id": "v38"}, {"term": "忌憚", "meaning": "遠慮すること", "category": "word", "id": "v39"}, {"term": "抜き差しならない", "meaning": "身動きがとれずどうしようもないこと", "category": "word", "id": "v40"}, {"term": "のっぴきならない", "meaning": "動きが取れないこと", "category": "word", "id": "v41"}, {"term": "いたたまれない", "meaning": "その場に我慢していられないこと", "category": "word", "id": "v42"}, {"term": "冗漫", "meaning": "無駄が多く、締まりがないこと", "category": "word", "id": "v43"}, {"term": "推敲", "meaning": "何度も練り直すこと", "category": "word", "id": "v44"}, {"term": "逆ねじ", "meaning": "批判を批判で返すこと", "category": "word", "id": "v45"}, {"term": "嘱望", "meaning": "将来に望みをかけること", "category": "word", "id": "v46"}, {"term": "宿願", "meaning": "前々からの夢", "category": "word", "id": "v47"}, {"term": "皮算用", "meaning": "まだ実現していないことを当てにして計画を立てること", "category": "word", "id": "v48"}, {"term": "胸算用", "meaning": "心の中で見積もること", "category": "word", "id": "v49"}, {"term": "横柄", "meaning": "人を見下す態度", "category": "word", "id": "v50"}, {"term": "横着", "meaning": "わざと怠けてやらないこと", "category": "word", "id": "v51"}, {"term": "無為", "meaning": "手を加えないこと", "category": "word", "id": "v52"}, {"term": "専横", "meaning": "わがまま", "category": "word", "id": "v53"}, {"term": "食傷", "meaning": "何度も同じことが続いて嫌になること", "category": "word", "id": "v54"}, {"term": "徒食", "meaning": "働かずに遊んで暮らすこと", "category": "word", "id": "v55"}, {"term": "おおわらわ", "meaning": "なりふり構わず一生懸命になること", "category": "word", "id": "v56"}, {"term": "てんてこ舞い", "meaning": "忙しいこと", "category": "word", "id": "v57"}, {"term": "資する", "meaning": "役立つこと", "category": "word", "id": "v58"}, {"term": "ことほぐ", "meaning": "祝福すること", "category": "word", "id": "v59"}, {"term": "たゆたう", "meaning": "揺れ動くこと", "category": "word", "id": "v60"}, {"term": "さかしげ", "meaning": "いかにも利口そうな様子", "category": "word", "id": "v61"}, {"term": "ほぞかむ", "meaning": "どうにもならないことを残念に思うこと", "category": "word", "id": "v62"}, {"term": "つまびらか", "meaning": "細部まではっきりしていること", "category": "word", "id": "v63"}, {"term": "さもしい", "meaning": "卑しいこと", "category": "word", "id": "v64"}, {"term": "あながち", "meaning": "必ずしも", "category": "word", "id": "v65"}, {"term": "かまける", "meaning": "そのことだけに気を取られ、他をおろそかにすること", "category": "word", "id": "v66"}, {"term": "おもはゆい", "meaning": "照れくさく、恥ずかしいこと", "category": "word", "id": "v67"}, {"term": "猜疑", "meaning": "素直に理解せず、ねたむこと", "category": "word", "id": "v68"}, {"term": "すげない", "meaning": "思いやりのないこと", "category": "word", "id": "v69"}, {"term": "適宜", "meaning": "適切なタイミングで行うこと", "category": "word", "id": "v70"}, {"term": "放漫", "meaning": "やりっぱなしなこと", "category": "word", "id": "v71"}, {"term": "皮相", "meaning": "物事の表面だけで判断すること", "category": "word", "id": "v72"}, {"term": "即妙", "meaning": "とっさに気が利くこと", "category": "word", "id": "v73"}, {"term": "省察", "meaning": "自分を顧みて考えをめぐらすこと", "category": "word", "id": "v74"}, {"term": "かいがいしい", "meaning": "きびきびしていること", "category": "word", "id": "v75"}, {"term": "如才", "meaning": "いい加減なところ、抜け目のなさに欠けること", "category": "word", "id": "v76"}, {"term": "懸案", "meaning": "問題とされながら未解決のままになっていること", "category": "word", "id": "v77"}, {"term": "果断", "meaning": "思い切って物事を実行すること", "category": "word", "id": "v78"}, {"term": "籠絡", "meaning": "他人をうまく丸め込むこと", "category": "word", "id": "v79"}, {"term": "糊塗", "meaning": "一時しのぎでごまかすこと", "category": "word", "id": "v80"}, {"term": "躍如", "meaning": "生き生きと表れていること", "category": "word", "id": "v81"}, {"term": "跳梁", "meaning": "自由に跳ね回ること", "category": "word", "id": "v82"}, {"term": "消長", "meaning": "衰えたり栄えたりすること", "category": "word", "id": "v83"}, {"term": "卑近", "meaning": "身近でありふれていること", "category": "word", "id": "v84"}, {"term": "分外", "meaning": "身分を超えること", "category": "word", "id": "v85"}, {"term": "怪訝", "meaning": "怪しく思い、納得がいかないこと", "category": "word", "id": "v86"}, {"term": "後逸", "meaning": "好機をつかまず、何もせずに成果を残せないこと", "category": "word", "id": "v87"}, {"term": "磊落", "meaning": "些細なことにこだわらない、太っ腹な性格", "category": "word", "id": "v88"}, {"term": "本懐を遂げる", "meaning": "もともとの夢・願いを達成すること", "category": "phrase", "id": "v89"}, {"term": "陰謀に加担する", "meaning": "陰謀に加わり、力を貸すこと", "category": "phrase", "id": "v90"}, {"term": "様相を呈する", "meaning": "ある状態や形になって表れること", "category": "phrase", "id": "v91"}, {"term": "通院にかこつけて仲直りする", "meaning": "通院することを理由・きっかけにして仲直りすること", "category": "phrase", "id": "v92"}, {"term": "好機を逸する", "meaning": "良い機会を逃すこと", "category": "phrase", "id": "v93"}, {"term": "全力を傾注する", "meaning": "すべての力を一つのことに注ぎ込むこと", "category": "phrase", "id": "v94"}, {"term": "一笑に付す", "meaning": "取るに足らないこととして笑って済ませ、本気にしないこと", "category": "phrase", "id": "v95"}, {"term": "しつらいを整える", "meaning": "場の設備・飾りなどを整えること", "category": "phrase", "id": "v96"}, {"term": "哀惜の念", "meaning": "人の死などを惜しみ悲しむ気持ち", "category": "phrase", "id": "v97"}, {"term": "失地を回復する", "meaning": "失った地位や評価を取り戻すこと", "category": "phrase", "id": "v98"}, {"term": "溜飲を下げる", "meaning": "不満や鬱憤を解消してすっきりすること", "category": "phrase", "id": "v99"}, {"term": "瓦解", "meaning": "一部から全体が崩れること", "category": "word", "id": "v100"}, {"term": "至言", "meaning": "的確に言い表した言葉", "category": "word", "id": "v101"}, {"term": "夭逝", "meaning": "若くして死ぬこと", "category": "word", "id": "v102"}, {"term": "真正", "meaning": "本当に正しいこと", "category": "word", "id": "v103"}, {"term": "幸甚", "meaning": "非常に幸せなこと", "category": "word", "id": "v104"}, {"term": "如実", "meaning": "実際の通りであること", "category": "word", "id": "v105"}, {"term": "拝眉", "meaning": "人に会うこと", "category": "word", "id": "v106"}, {"term": "あまつさえ", "meaning": "それだけでなく、その上(さらに悪いことに)", "category": "word", "id": "v107"}, {"term": "つぶさに", "meaning": "細かく、詳しく", "category": "word", "id": "v108"}, {"term": "畢竟", "meaning": "結局", "category": "word", "id": "v109"}, {"term": "鼓吹", "meaning": "意見・思想を吹き込んで主張すること", "category": "word", "id": "v110"}, {"term": "嗚咽", "meaning": "声を押し殺して泣くこと", "category": "word", "id": "v111"}, {"term": "潮時", "meaning": "ちょうどいいタイミング", "category": "word", "id": "v112"}, {"term": "星霜", "meaning": "年月", "category": "word", "id": "v113"}, {"term": "委嘱", "meaning": "人に任せて頼むこと", "category": "word", "id": "v114"}, {"term": "意気衝天", "meaning": "意気込みが盛んで元気なこと", "category": "word", "id": "v115"}, {"term": "公明正大", "meaning": "心がはっきりしていて、大きく正しいこと", "category": "word", "id": "v116"}, {"term": "百花繚乱", "meaning": "優れた人や物事がいっきに現れること", "category": "word", "id": "v117"}, {"term": "不埒", "meaning": "行き届かず、けしからんこと", "category": "word", "id": "v118"}, {"term": "敷衍", "meaning": "言い換えてわかりやすく説明すること", "category": "word", "id": "v119"}, {"term": "通暁", "meaning": "すみずみまで知り尽くしていること", "category": "word", "id": "v120"}, {"term": "屈指", "meaning": "数多くの中で特に指を折って数えられるほど優れていること", "category": "word", "id": "v121"}, {"term": "あけすけ", "meaning": "包み隠さず、ざっくばらんなこと", "category": "word", "id": "v122"}, {"term": "余念", "meaning": "そのほかの考え", "category": "word", "id": "v123"}, {"term": "緩慢", "meaning": "ゆっくりしていること", "category": "word", "id": "v124"}, {"term": "酸鼻", "meaning": "むごく痛ましいこと", "category": "word", "id": "v125"}, {"term": "醜態", "meaning": "見苦しい態度", "category": "word", "id": "v126"}, {"term": "醜悪", "meaning": "見た目が酷いこと", "category": "word", "id": "v127"}, {"term": "非業の", "meaning": "運悪く、みじめな(最期など)", "category": "word", "id": "v128"}, {"term": "不慮の", "meaning": "思いがけないこと", "category": "word", "id": "v129"}, {"term": "不覚の", "meaning": "そうなるとは知らずに(うっかり)", "category": "word", "id": "v130"}, {"term": "希求", "meaning": "強く求めること", "category": "word", "id": "v131"}, {"term": "与する", "meaning": "仲間に加わること", "category": "word", "id": "v132"}, {"term": "あげつらう", "meaning": "欠点を大げさに言うこと", "category": "word", "id": "v133"}, {"term": "雄飛", "meaning": "大きな志をもって盛んに活動すること", "category": "word", "id": "v134"}, {"term": "姦計", "meaning": "悪だくみ", "category": "word", "id": "v135"}, {"term": "心得違い", "meaning": "人の道に外れた考え", "category": "word", "id": "v136"}, {"term": "小利口", "meaning": "目先のことだけ抜け目のないこと", "category": "word", "id": "v137"}, {"term": "すべからく", "meaning": "当然、ぜひとも", "category": "word", "id": "v138"}, {"term": "はかばかしい", "meaning": "順調であること", "category": "word", "id": "v139"}, {"term": "克己", "meaning": "意思の力で衝動に打ち勝つこと", "category": "word", "id": "v140"}, {"term": "気位", "meaning": "品位を保とうとする心持ち", "category": "word", "id": "v141"}, {"term": "洒脱", "meaning": "気取らず、さっぱりと洗練されていること", "category": "word", "id": "v142"}, {"term": "おもむろに", "meaning": "落ち着いてゆっくりと", "category": "word", "id": "v143"}, {"term": "呻吟", "meaning": "苦しみうめくこと", "category": "word", "id": "v144"}, {"term": "僥倖", "meaning": "思いがけない幸運", "category": "word", "id": "v145"}, {"term": "老成", "meaning": "経験を積んで円熟していること", "category": "word", "id": "v146"}, {"term": "一介", "meaning": "つまらない、ただの", "category": "word", "id": "v147"}, {"term": "そねむ", "meaning": "ねたましく思うこと", "category": "word", "id": "v148"}, {"term": "辟易", "meaning": "うんざりすること", "category": "word", "id": "v149"}, {"term": "周到", "meaning": "よく行き届いていること", "category": "word", "id": "v150"}, {"term": "ぐずる ＝ むずかる", "meaning": "どちらも「すねる、不満そうにする」という意味の同義語", "category": "relation", "id": "v151"}, {"term": "たじろぐ ＝ ひるむ", "meaning": "ほぼ同じ意味を持つ同義語", "category": "relation", "id": "v152"}, {"term": "いぶかる ＝ うたがう", "meaning": "ほぼ同じ意味を持つ同義語", "category": "relation", "id": "v153"}, {"term": "くさす ⇔ おだてる", "meaning": "対義語。悪く言う ⇔ おだてて気をよくさせる", "category": "relation", "id": "v154"}, {"term": "露骨 ⇔ 婉曲", "meaning": "対義語。あからさま ⇔ 遠回し", "category": "relation", "id": "v155"}, {"term": "圧倒 ⇔ 比較", "meaning": "関連語。他を大きく上回ること ⇔ 他と比べること", "category": "relation", "id": "v156"}, {"term": "漠然 ⇔ 判然", "meaning": "対義語。はっきりしない ⇔ はっきりしている", "category": "relation", "id": "v157"}, {"term": "皮相 ⇔ 本質", "meaning": "対義語。表面的なこと ⇔ 物事の核心", "category": "relation", "id": "v158"}, {"term": "演繹 ⇔ 帰納", "meaning": "対比される推論方法。一般から個別を導く ⇔ 個別から一般を導く", "category": "relation", "id": "v159"}];
+
+const CATEGORY_LABEL = { word:'語彙', phrase:'慣用句', relation:'関連語' };
+
+let progress = {};
+let mode = 'flash';
+let flashQueue = [], flashIndex = 0, flipped = false;
+let quizQueue = [], quizIndex = 0, quizAnswered = false;
+let quizScore = { correct:0, total:0 };
+let listFilter = { search:'', cat:'all', status:'all' };
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function buildSession(){
+  const weighted = VOCAB.map(v=>({ id:v.id, w: 6 - (progress[v.id]?.box || 1) }));
+  weighted.forEach(item=>{ item.key = Math.pow(Math.random(), 1/item.w); });
+  weighted.sort((a,b)=> b.key - a.key);
+  return weighted.map(x=>x.id);
+}
+
+async function loadProgress(){
+  let loaded = null;
+  try{
+    const res = localStorage.getItem('progress');
+    loaded = res ? JSON.parse(res) : null;
+  }catch(e){ loaded = null; }
+  progress = loaded || {};
+  VOCAB.forEach(v=>{ if(!progress[v.id]) progress[v.id] = { box:1, seen:0 }; });
+}
+
+async function saveProgress(){
+  try{ localStorage.setItem('progress', JSON.stringify(progress)); }
+  catch(e){ console.error('save failed', e); }
+}
+
+function counts(){
+  let mastered=0, started=0;
+  VOCAB.forEach(v=>{
+    const p = progress[v.id];
+    if(p.box>=3) mastered++;
+    else if(p.seen>0) started++;
+  });
+  return { total: VOCAB.length, mastered, started, untouched: VOCAB.length - mastered - started };
+}
+
+function vocabById(id){ return VOCAB.find(v=>v.id===id); }
+
+/* ---------------- render: shell ---------------- */
+function renderShell(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="header">
+      <span class="eyebrow">SPI 言語常識・語彙</span>
+      <h1>SPI難語帖</h1>
+      <div class="sub">画像から書き出した難語彙を、カードとクイズで覚える</div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="progress-rail"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="tabs">
+      <div class="tab" data-mode="flash">フラッシュカード</div>
+      <div class="tab" data-mode="quiz">クイズ</div>
+      <div class="tab" data-mode="list">一覧</div>
+    </div>
+    <div class="panel" id="panel"></div>
+    <div class="footer-bar" id="footerBar"></div>
+  `;
+  app.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click', ()=>{ mode = t.dataset.mode; renderTabs(); renderPanel(); });
+  });
+  renderTabs();
+  renderStats();
+  renderFooter();
+}
+
+function renderFooter(confirming){
+  const el = document.getElementById('footerBar');
+  if(confirming){
+    el.innerHTML = `本当にリセットしますか？ <a id="confirmYes">はい、リセットする</a> ／ <a id="confirmNo">キャンセル</a>`;
+    document.getElementById('confirmYes').addEventListener('click', doResetProgress);
+    document.getElementById('confirmNo').addEventListener('click', ()=> renderFooter(false));
+  } else {
+    el.innerHTML = `学習の記録は端末に保存されます ／ <a id="resetLink">記録をリセット</a>`;
+    document.getElementById('resetLink').addEventListener('click', ()=> renderFooter(true));
+  }
+}
+
+function renderTabs(){
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.mode === mode);
+  });
+}
+
+function renderStats(){
+  const c = counts();
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="num">${c.total}</div><div class="label">総語数</div></div>
+    <div class="stat"><div class="num">${c.mastered}</div><div class="label">習得済み</div></div>
+    <div class="stat"><div class="num">${c.started}</div><div class="label">学習中</div></div>
+    <div class="stat"><div class="num">${c.untouched}</div><div class="label">未着手</div></div>
+  `;
+  const pct = c.total ? Math.round((c.mastered / c.total) * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function renderPanel(){
+  if(mode === 'flash') renderFlashPanel();
+  else if(mode === 'quiz') renderQuizPanel();
+  else renderListPanel();
+}
+
+/* ---------------- flashcard mode ---------------- */
+function renderFlashPanel(){
+  if(flashQueue.length === 0){ flashQueue = buildSession(); flashIndex = 0; }
+  const panel = document.getElementById('panel');
+  panel.innerHTML = `
+    <div class="card-stage">
+      <div class="session-progress" id="flashProgress"></div>
+      <div class="flashcard" id="flashcard">
+        <div class="flashcard-inner" id="flashcardInner">
+          <div class="face front">
+            <div class="hole"></div>
+            <div class="tab-strip" id="frontTab"></div>
+            <div class="content"><div class="term" id="frontTerm"></div></div>
+            <div class="hint">タップして意味を見る</div>
+          </div>
+          <div class="face back">
+            <div class="hole"></div>
+            <div class="tab-strip" id="backTab"></div>
+            <div class="term-small" id="backTermSmall"></div>
+            <div class="stamp" id="stamp">済</div>
+            <div class="content"><div class="meaning" id="backMeaning"></div></div>
+            <div class="hint">&nbsp;</div>
+          </div>
+        </div>
+      </div>
+      <div class="dots" id="flashDots"></div>
+      <div class="actions" id="flashActions">
+        <button class="btn again" id="btnAgain">もう一度</button>
+        <button class="btn know" id="btnKnow">覚えた ✓</button>
+      </div>
+      <div class="flip-tip">カードをタップ／クリックすると裏返ります</div>
+    </div>
+  `;
+  document.getElementById('flashcardInner').addEventListener('click', toggleFlip);
+  document.getElementById('btnAgain').addEventListener('click', (e)=>{ e.stopPropagation(); markCard(false); });
+  document.getElementById('btnKnow').addEventListener('click', (e)=>{ e.stopPropagation(); markCard(true); });
+  flipped = false;
+  renderFlashContent();
+}
+
+function currentFlashVocab(){
+  if(flashIndex >= flashQueue.length){ flashQueue = buildSession(); flashIndex = 0; }
+  return vocabById(flashQueue[flashIndex]);
+}
+
+function renderFlashContent(){
+  const v = currentFlashVocab();
+  const p = progress[v.id];
+  document.getElementById('flashProgress').textContent = `${flashIndex+1} / ${flashQueue.length}`;
+  document.getElementById('frontTerm').textContent = v.term;
+  document.getElementById('backMeaning').textContent = v.meaning;
+  document.getElementById('backTermSmall').textContent = v.term;
+  document.getElementById('frontTab').textContent = CATEGORY_LABEL[v.category];
+  document.getElementById('frontTab').className = 'tab-strip ' + v.category;
+  document.getElementById('backTab').textContent = CATEGORY_LABEL[v.category];
+  document.getElementById('backTab').className = 'tab-strip ' + v.category;
+  document.getElementById('flashcard').classList.remove('flipped');
+  document.getElementById('flashActions').classList.remove('show');
+  document.getElementById('stamp').classList.remove('show');
+  renderDots('flashDots', p.box);
+}
+
+function renderDots(elId, box){
+  let html = '';
+  for(let i=1;i<=5;i++){
+    html += `<span class="dot ${i<=box ? (box>=3?'mastered-dot':'filled') : ''}"></span>`;
+  }
+  document.getElementById(elId).innerHTML = html;
+}
+
+function toggleFlip(){
+  flipped = !flipped;
+  document.getElementById('flashcard').classList.toggle('flipped', flipped);
+  document.getElementById('flashActions').classList.toggle('show', flipped);
+}
+
+function markCard(known){
+  if(!flipped) return;
+  const v = currentFlashVocab();
+  const p = progress[v.id];
+  const wasMastered = p.box >= 3;
+  p.seen++;
+  p.box = known ? Math.min(5, p.box + 1) : 1;
+  saveProgress();
+  renderStats();
+  renderDots('flashDots', p.box);
+  if(known && p.box >= 3 && !wasMastered){
+    document.getElementById('stamp').classList.add('show');
+    setTimeout(advanceFlash, 750);
+  } else {
+    setTimeout(advanceFlash, 180);
+  }
+}
+
+function advanceFlash(){
+  flipped = false;
+  document.getElementById('flashcard').classList.remove('flipped');
+  document.getElementById('flashActions').classList.remove('show');
+  document.getElementById('stamp').classList.remove('show');
+  setTimeout(() => {
+    flashIndex++;
+    renderFlashContent();
+  }, 250);
+}
+
+/* ---------------- quiz mode ---------------- */
+function renderQuizPanel(){
+  if(quizQueue.length === 0){ quizQueue = buildSession(); quizIndex = 0; }
+  const panel = document.getElementById('panel');
+  panel.innerHTML = `
+    <div class="quiz-head">
+      <div class="quiz-prompt">この言葉の意味として正しいものを選んでください</div>
+      <div class="session-progress" id="quizProgress"></div>
+    </div>
+    <div class="quiz-term" id="quizTerm"></div>
+    <div class="choices" id="quizChoices"></div>
+    <div class="quiz-footer">
+      <div class="quiz-score" id="quizScore"></div>
+      <button class="btn-next" id="btnNext">次へ →</button>
+    </div>
+  `;
+  document.getElementById('btnNext').addEventListener('click', ()=>{
+    quizIndex++;
+    if(quizIndex >= quizQueue.length){ quizQueue = buildSession(); quizIndex = 0; }
+    renderQuizQuestion();
+  });
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion(){
+  quizAnswered = false;
+  const id = quizQueue[quizIndex];
+  const v = vocabById(id);
+  document.getElementById('quizProgress').textContent = `${quizIndex+1} / ${quizQueue.length}`;
+  document.getElementById('quizTerm').textContent = v.term;
+  document.getElementById('quizScore').textContent = `正解 ${quizScore.correct} / ${quizScore.total}`;
+  document.getElementById('btnNext').classList.remove('show');
+
+  let pool = VOCAB.filter(x=> x.id !== v.id && x.category === v.category);
+  if(pool.length < 3) pool = VOCAB.filter(x=> x.id !== v.id);
+  shuffle(pool);
+  const distractors = pool.slice(0,3).map(x=>x.meaning);
+  const options = shuffle([v.meaning, ...distractors]);
+
+  const choicesEl = document.getElementById('quizChoices');
+  choicesEl.innerHTML = '';
+  options.forEach(meaning=>{
+    const btn = document.createElement('div');
+    btn.className = 'choice';
+    btn.textContent = meaning;
+    btn.dataset.correct = (meaning === v.meaning) ? '1' : '0';
+    btn.addEventListener('click', ()=> selectChoice(btn, v.id));
+    choicesEl.appendChild(btn);
+  });
+}
+
+function selectChoice(el, id){
+  if(quizAnswered) return;
+  quizAnswered = true;
+  const isCorrect = el.dataset.correct === '1';
+  const p = progress[id];
+  p.seen++;
+  quizScore.total++;
+  if(isCorrect){
+    p.box = Math.min(5, p.box + 1);
+    quizScore.correct++;
+    el.classList.add('correct');
+  } else {
+    p.box = 1;
+    el.classList.add('wrong');
+    document.querySelectorAll('#quizChoices .choice').forEach(c=>{
+      if(c.dataset.correct === '1') c.classList.add('correct');
+    });
+  }
+  document.querySelectorAll('#quizChoices .choice').forEach(c=> c.classList.add('disabled'));
+  document.getElementById('quizScore').textContent = `正解 ${quizScore.correct} / ${quizScore.total}`;
+  document.getElementById('btnNext').classList.add('show');
+  saveProgress();
+  renderStats();
+}
+
+/* ---------------- list mode ---------------- */
+function renderListPanel(){
+  const panel = document.getElementById('panel');
+  panel.innerHTML = `
+    <div class="list-controls">
+      <input class="search" id="searchInput" type="text" placeholder="語句や意味で検索…" value="${listFilter.search}">
+      <div class="chip-row" id="catChips">
+        <div class="chip" data-cat="all">すべて</div>
+        <div class="chip" data-cat="word">語彙</div>
+        <div class="chip" data-cat="phrase">慣用句</div>
+        <div class="chip" data-cat="relation">関連語</div>
+      </div>
+      <div class="chip-row" id="statusChips">
+        <div class="chip" data-status="all">すべて</div>
+        <div class="chip" data-status="todo">未習得</div>
+        <div class="chip" data-status="done">習得済み</div>
+      </div>
+    </div>
+    <div class="list-count" id="listCount"></div>
+    <div class="list-rows" id="listRows"></div>
+  `;
+  document.getElementById('searchInput').addEventListener('input', (e)=>{
+    listFilter.search = e.target.value;
+    renderListRows();
+  });
+  document.querySelectorAll('#catChips .chip').forEach(c=>{
+    c.addEventListener('click', ()=>{ listFilter.cat = c.dataset.cat; renderListPanel(); });
+  });
+  document.querySelectorAll('#statusChips .chip').forEach(c=>{
+    c.addEventListener('click', ()=>{ listFilter.status = c.dataset.status; renderListPanel(); });
+  });
+  document.querySelectorAll('#catChips .chip').forEach(c=> c.classList.toggle('active', c.dataset.cat===listFilter.cat));
+  document.querySelectorAll('#statusChips .chip').forEach(c=> c.classList.toggle('active', c.dataset.status===listFilter.status));
+  renderListRows();
+}
+
+function renderListRows(){
+  const q = listFilter.search.trim();
+  const filtered = VOCAB.filter(v=>{
+    if(listFilter.cat !== 'all' && v.category !== listFilter.cat) return false;
+    const mastered = progress[v.id].box >= 3;
+    if(listFilter.status === 'todo' && mastered) return false;
+    if(listFilter.status === 'done' && !mastered) return false;
+    if(q && !(v.term.includes(q) || v.meaning.includes(q))) return false;
+    return true;
+  });
+
+  // 進捗（box）が大きい順、次に確認回数（seen）が多い順にソート
+  filtered.sort((a, b) => {
+    const pA = progress[a.id];
+    const pB = progress[b.id];
+    if (pB.box !== pA.box) return pB.box - pA.box;
+    return pB.seen - pA.seen;
+  });
+
+  document.getElementById('listCount').textContent = `${filtered.length} 件`;
+  const rowsEl = document.getElementById('listRows');
+  if(filtered.length === 0){
+    rowsEl.innerHTML = '<div class="empty-msg">条件に合う語句が見つかりません</div>';
+    return;
+  }
+  rowsEl.innerHTML = filtered.map(v=>{
+    const p = progress[v.id];
+    const mastered = p.box >= 3;
+    return `
+      <div class="row">
+        <div class="row-top">
+          <div class="mark">${mastered ? '済' : ''}</div>
+          <div class="term">${v.term}</div>
+          <div class="badge ${v.category}">${CATEGORY_LABEL[v.category]}</div>
+        </div>
+        <div class="dots" style="justify-content: flex-start; margin: 4px 0 4px 23px; gap:3px;">
+          ${[1,2,3,4,5].map(i => `
+            <span class="dot ${i <= p.box ? (p.box >= 3 ? 'mastered-dot' : 'filled') : ''}" style="width:6px; height:6px;"></span>
+          `).join('')}
+        </div>
+        <div class="meaning">${v.meaning}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ---------------- reset ---------------- */
+async function doResetProgress(){
+  progress = {};
+  VOCAB.forEach(v=> progress[v.id] = { box:1, seen:0 });
+  await saveProgress();
+  flashQueue = buildSession(); flashIndex = 0;
+  quizQueue = buildSession(); quizIndex = 0;
+  quizScore = { correct:0, total:0 };
+  renderStats();
+  renderPanel();
+  renderFooter(false);
+}
+
+/* ---------------- init ---------------- */
+(async function init(){
+  await loadProgress();
+  flashQueue = buildSession(); flashIndex = 0;
+  quizQueue = buildSession(); quizIndex = 0;
+  renderShell();
+  renderPanel();
+})();
+</script>
+</body>
+</html>
